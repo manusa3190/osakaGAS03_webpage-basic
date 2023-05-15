@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+    </style>
+  </head>
+  <body>
+    <div id="vue-app"></div>
+    <!-- Vue3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <script>
+      const {defineComponent, ref,reactive,computed,onMounted} = Vue
+
+      const app = defineComponent({
+        async setup(){
+
+        },
+        template:`テスト`
+      })
+
+      Vue.createApp({
+        components:{app},
+        template:`<Suspense><app /></Suspense>`
+      }).mount('#vue-app')
+
+    </script>
+
+    
+  </body>
+</html>
