@@ -5,9 +5,10 @@
     <!-- TailwindCSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style type="text/tailwindcss">
+    button {@apply rounded-lg px-2 py-1 text-white text-sm}
     </style>
   </head>
-  <body>
+  <body class="px-3">
     <div id="vue-app"></div>
     <!-- Vue3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -17,9 +18,83 @@
 
       const app = defineComponent({
         async setup(){
+          // 2. サーバー側からデータを受け取る。
+          const getTasks=()=>{
+            return new Promise((resolve,reject)=>{
+              google.script.run
+                .withSuccessHandler((res)=>{
+                  const tasks = JSON.parse(res)
+                  tasks.forEach(task=>task.isEditting=false)
+                  resolve(tasks)
+                })
+                .getTasks()
+            })
+          }
 
+          const tasks = ref(await getTasks())
+
+          const newTask = reactive({ID:undefined,タスク名:'',完了:false,タイムスタンプ:undefined})
+
+          // 1. フロントからサーバーサイドにデータを渡す
+          const addTask=()=>{
+            google.script.run
+              .withSuccessHandler((res)=>{
+                tasks.value = JSON.parse(res)
+                newTask.タイトル=''
+              })
+              .createTask(JSON.stringify(newTask))            
+          }
+
+          // 3.全てのレコードを更新する
+          const updateTasks=async()=>{
+            google.script.run
+              .withSuccessHandler((res)=>{
+                tasks.value = JSON.parse(res)
+              })
+              .updateTasks(JSON.stringify(tasks.value))    
+          }
+
+          // レコードを削除する
+          const removeTask=(ID)=>{
+            google.script.run
+              .withSuccessHandler((res)=>{
+                tasks.value = JSON.parse(res)
+              })
+              .destroyTask(ID)
+          }
+
+          return {tasks, newTask, addTask, updateTasks, removeTask,}
         },
-        template:`テスト`
+        template:`
+        <nav class=" py-3 flex">
+          <h1 class=" text-3xl font-bold">タスクリスト</h1>
+          <div class="flex-1"></div>
+          <button @click="updateTasks()" class="bg-blue-500">タスクを更新</button>
+        </nav>
+
+        <ul class="space-y-2">
+          <li v-for="task of tasks" class=" border-t-2">
+            <div class="flex justify-between items-start">
+              <label>
+                <input type="checkbox" v-model="task.完了">
+                <input class="px-2" v-model="task.タスク名" placeholder="タスク名">
+              </label>
+
+              <div clas="flex-1"></div>
+
+              <div class="text-sm">作成日時:{{ (new Date(task.タイムスタンプ)).toLocaleString() }}</div>
+
+              <button @click="removeTask(task.ID)" class=" bg-red-500">削除</button>
+            </div>
+
+          </li>
+        </ul>
+
+        <div class="flex py-3">
+            <input v-model="newTask.タスク名" class=" flex-1 border border-blue-500 px-2 py-1">
+            <button @click="addTask" class=" bg-blue-500 ">追加</button>        
+        </div>
+        `
       })
 
       Vue.createApp({
