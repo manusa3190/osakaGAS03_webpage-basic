@@ -13,8 +13,12 @@
     <!-- Vue3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
+    <!-- vue-router -->
+    <script src="https://unpkg.com/vue-router@4"></script>
+
     <script>
       const {defineComponent, ref,reactive,computed,onMounted} = Vue
+      const {useRouter,useRoute} = VueRouter
 
       const app = defineComponent({
         async setup(){
@@ -97,10 +101,28 @@
         `
       })
 
+      const router = VueRouter.createRouter({
+        history: VueRouter.createWebHashHistory(),
+        routes:[
+          { path: '/', component: app },
+        ]
+      })
+
       Vue.createApp({
         components:{app},
-        template:`<Suspense><app /></Suspense>`
-      }).mount('#vue-app')
+        template:`
+        <RouterView v-slot="{ Component }">
+          <template v-if="Component">
+            <Suspense>
+              <component :is="Component"></component>
+
+              <template #fallback>Loading...</template>              
+            </Suspense>
+          </template>
+        </RouterView>`
+      })
+      .use(router)
+      .mount('#vue-app')
 
     </script>
 
