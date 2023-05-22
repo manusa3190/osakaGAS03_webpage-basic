@@ -4,6 +4,11 @@ const getTasks=()=>{
   return JSON.stringify(タスク.items)
 }
 
+const getTask=(ID)=>{
+  const task = タスク.docs[ID]
+  return JSON.stringify(task)
+}
+
 const createTask=(data)=>{
   const newTask = JSON.parse(data)
   newTask.ID = Utilities.getUuid()

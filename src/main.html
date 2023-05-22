@@ -23,6 +23,50 @@
       const {defineComponent, ref,reactive,computed,onMounted} = Vue
       const {useRouter,useRoute} = VueRouter
 
+      const getTask =(ID)=>{
+        return new Promise((resolve)=>{
+          google.script.run
+            .withSuccessHandler(res=>resolve(JSON.parse(res)))
+            .getTask(ID)
+        })
+      }
+
+      const editPage=defineComponent({
+        async setup(){
+          const route = useRoute()
+          const router = useRouter()
+          const id = route.params.id
+          
+          const task = reactive(await getTask(id))
+
+          const updateTask=()=>{
+            console.log(task)
+            google.script.run
+              .withSuccessHandler(()=>{
+                router.push('/')
+              })
+              .updateTask(JSON.stringify(task))
+          }
+          return {task,updateTask}
+        },
+        template:`
+        <h2>編集</h2>
+
+        <label>
+          <h3>タスク名</h3>
+          <input v-model="task.タスク名" class=" flex-1 border border-blue-500 px-2 py-1">
+        </label>
+
+        <label>
+          <h3>詳細</h3>
+          <textarea v-model="task.詳細" class="border w-full p-2"></textarea>
+        </label>        
+                  
+        <button @click="updateTask()" class=" bg-blue-500 ">更新</button>  
+        
+        `
+      })
+
       const newPage=defineComponent({
         setup(){
           const router = useRouter()
@@ -108,7 +152,7 @@
         </nav>
 
         <ul class="space-y-2">
-          <li v-for="task of tasks" class=" border-t-2">
+          <li v-for="task of tasks" class=" border-t-2" @click="$router.push(task.ID)">
             <div class="flex justify-between items-start">
               <label>
                 <input type="checkbox" v-model="task.完了">
@@ -132,6 +176,7 @@
         routes:[
           { path: '/', component: app },
           { path: '/new', component: newPage},
+          { path: '/:id', component: editPage}
         ]
       })
 
