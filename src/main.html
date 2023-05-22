@@ -31,46 +31,12 @@
         })
       }
 
-      const editPage=defineComponent({
+      const form=defineComponent({
         async setup(){
           const route = useRoute()
-          const router = useRouter()
-          const id = route.params.id
-          
-          const task = reactive(await getTask(id))
+          const isEdit = route.name==='edit'
 
-          const updateTask=()=>{
-            console.log(task)
-            google.script.run
-              .withSuccessHandler(()=>{
-                router.push('/')
-              })
-              .updateTask(JSON.stringify(task))
-          }
-          return {task,updateTask}
-        },
-        template:`
-        <h2>編集</h2>
-
-        <label>
-          <h3>タスク名</h3>
-          <input v-model="task.タスク名" class=" flex-1 border border-blue-500 px-2 py-1">
-        </label>
-
-        <label>
-          <h3>詳細</h3>
-          <textarea v-model="task.詳細" class="border w-full p-2"></textarea>
-        </label>        
-                  
-        <button @click="updateTask()" class=" bg-blue-500 ">更新</button>  
-        
-        `
-      })
-
-      const newPage=defineComponent({
-        setup(){
-          const router = useRouter()
-          const task = reactive({
+          const task = ref({
             ID:undefined,
             タスク名:'',
             完了:false,
@@ -78,17 +44,29 @@
             詳細:'',
           })
 
-          // 1. フロントからサーバーサイドにデータを渡す
+          if(isEdit){
+            const id = route.params.id
+            task.value=await getTask(id)
+          }
+
           const addTask=()=>{
             google.script.run
               .withSuccessHandler((res)=>router.push('/'))
-              .createTask(JSON.stringify(task))            
-          }          
+              .createTask(JSON.stringify(task.value))            
+          }
 
-          return {task, addTask}
+          const updateTask=()=>{
+            google.script.run
+              .withSuccessHandler(()=>{
+                router.push('/')
+              })
+              .updateTask(JSON.stringify(task.value))
+          }
+
+          return {task,isEdit, addTask,updateTask}
         },
         template:`
-        <h2>新規作成</h2>
+        <h2>{{ isEdit? '編集':'新規作成'}}</h2>
 
         <label>
           <h3>タスク名</h3>
@@ -100,7 +78,8 @@
           <textarea v-model="task.詳細" class="border w-full p-2"></textarea>
         </label>        
                   
-        <button @click="addTask" class=" bg-blue-500 ">追加</button>  
+        <button :hidden="!isEdit" @click="updateTask()" class=" bg-blue-500 ">更新</button>
+        <button :hidden="isEdit" @click="addTask()" class=" bg-blue-500 ">作成</button>
         `
       })
 
@@ -175,8 +154,8 @@
         history: VueRouter.createWebHashHistory(),
         routes:[
           { path: '/', component: app },
-          { path: '/new', component: newPage},
-          { path: '/:id', component: editPage}
+          { path: '/new',name:'new', component: form},
+          { path: '/:id',name:'edit', component: form}
         ]
       })
 
